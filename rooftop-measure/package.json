@@ -1,0 +1,16 @@
+{
+  "name": "rooftop-measurement-tool",
+  "version": "1.0.0",
+  "description": "Basic Google Maps setup for rooftop measurement",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -p 8000 -c-1 --cors",
+    "dev": "http-server -p 8000 -c-1 --cors -o"
+  },
+  "keywords": ["google-maps", "rooftop", "measurement"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

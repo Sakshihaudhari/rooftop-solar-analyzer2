@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rooftop Measurement Tool - Google Maps</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background: var(--primary-color, #4285f4);
+            color: white;
+            cursor: pointer;
+            margin-right: 5px;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover-color, #3367d6);
+        }
+
+        .btn.danger {
+            background: var(--danger-color, #db4437);
+        }
+
+        .btn.danger:hover {
+            background: var(--danger-hover-color, #c23321);
+        }
+
+        .area-display {
+            font-weight: bold;
+            color: var(--area-text-color, #4285f4);
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h3>Rooftop Measurement Tool</h3>
+        <p>Map Status: <span id="status">Loading...</span></p>
+
+        <div class="drawing-controls" style="margin-top: 10px;">
+            <button class="btn" onclick="startDrawing()">Start Drawing</button>
+            <button class="btn danger" onclick="clearPolygon()">Clear Polygon</button>
+        </div>
+
+        <div class="info" style="margin-top: 10px;">
+            <p>Area: <span id="area" class="area-display"></span></p>
+        </div>
+    </div>
+
+    <!-- Div where the Google Map will be rendered -->
+    <div id="map"></div>
+
+    <!-- Load configuration first -->
+    <script src="config.js"></script>
+
+    <!-- Global error handler to capture browser errors in terminal -->
+    <script>
+        // Capture JavaScript errors and send them to the logging API
+        window.onerror = function (message, source, lineno, colno, error) {
+            console.error("❌ Browser JS Error:", message, "at", source, ":", lineno);
+
+            // Send error to logging API if available
+            fetch("/log", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message,
+                    source,
+                    lineno,
+                    colno,
+                    error: error?.message || error,
+                    timestamp: new Date().toISOString()
+                }),
+            }).catch(err => console.warn("Could not send error to logging API:", err));
+
+            // Don't prevent default error handling
+            return false;
+        };
+
+        // Also capture unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error("❌ Unhandled Promise Rejection:", event.reason);
+
+            fetch("/log", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: "Unhandled Promise Rejection",
+                    source: "Promise",
+                    lineno: "unknown",
+                    colno: "unknown",
+                    error: event.reason?.message || event.reason,
+                    timestamp: new Date().toISOString()
+                }),
+            }).catch(err => console.warn("Could not send error to logging API:", err));
+        });
+    </script>
+
+    <!-- Load the main application script -->
+    <script src="script.js"></script>
+
+    <!-- Apply UI configuration to CSS custom properties -->
+    <script>
+        // Apply UI configuration to CSS custom properties
+        if (typeof UI_CONFIG !== 'undefined') {
+            const root = document.documentElement;
+            root.style.setProperty('--primary-color', UI_CONFIG.primaryColor);
+            root.style.setProperty('--primary-hover-color', UI_CONFIG.primaryHoverColor);
+            root.style.setProperty('--danger-color', UI_CONFIG.dangerColor);
+            root.style.setProperty('--danger-hover-color', UI_CONFIG.dangerHoverColor);
+            root.style.setProperty('--area-text-color', UI_CONFIG.areaTextColor);
+        }
+    </script>
+
+    <!-- Global callback function for Google Maps API -->
+    <script>
+        window.initMap = function() {
+            console.log('Google Maps API callback executed');
+
+            // Check if Google Maps API actually loaded
+            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                console.error('Google Maps API failed to load properly');
+                document.getElementById('status').textContent = 'Error: Google Maps API not available';
+                return;
+            }
+
+            console.log('Google Maps API loaded successfully');
+            try {
+                // Initialize the measurement tool
+                if (typeof window.measurementTool === 'undefined') {
+                    console.log('Creating measurement tool...');
+                    window.measurementTool = new RooftopMeasurementTool();
+                }
+                window.measurementTool.initialize();
+                console.log('Measurement tool initialized successfully');
+                document.getElementById('status').textContent = 'Ready - Map loaded';
+            } catch (error) {
+                console.error('Error initializing measurement tool:', error);
+                document.getElementById('status').textContent = 'Error: Initialization failed - ' + error.message;
+            }
+        };
+    </script>
+
+    <!-- Initialize Google Maps after all scripts are loaded -->
+    <script>
+        // Initialize Google Maps API and application
+        (function() {
+            function initializeApp() {
+                if (typeof GOOGLE_MAPS_API_KEY === 'undefined' || !GOOGLE_MAPS_API_KEY) {
+                    console.error('Google Maps API key not found. Please check your configuration.');
+                    document.getElementById('status').textContent = 'Error: API key not configured';
+                    return;
+                }
+
+                // Load Google Maps API script with callback
+                const script = document.createElement('script');
+                script.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_MAPS_API_KEY + '&libraries=drawing,geometry,places&callback=initMap';
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+
+                console.log('Loading Google Maps API with key:', GOOGLE_MAPS_API_KEY.substring(0, 10) + '...');
+                console.log('Full API URL:', script.src);
+
+                // Add error handling for the script
+                script.onerror = function() {
+                    console.error('Failed to load Google Maps API script');
+                    console.error('Script src:', script.src);
+                    document.getElementById('status').textContent = 'Error: Failed to load Google Maps API';
+                };
+            }
+
+            // Initialize when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeApp);
+            } else {
+                initializeApp();
+            }
+        })();
+    </script>
+</body>
+</html>

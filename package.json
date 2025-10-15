@@ -1,0 +1,26 @@
+{
+  "name": "rooftop-measurement-tool",
+  "version": "1.0.0",
+  "description": "A simple rooftop measurement tool using Google Maps",
+  "main": "index.html",
+  "scripts": {
+    "dev": "node -r dotenv/config server.js",
+    "start": "node -r dotenv/config server.js",
+    "serve": "node -r dotenv/config server.js"
+  },
+  "keywords": [
+    "google-maps",
+    "measurement",
+    "rooftop"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2"
+  }
+}
