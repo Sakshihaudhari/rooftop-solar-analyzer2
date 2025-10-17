@@ -1,26 +1,37 @@
 {
-  "name": "rooftop-measurement-tool",
+  "name": "rooftop-solar-analyzer",
   "version": "1.0.0",
-  "description": "A simple rooftop measurement tool using Google Maps",
-  "main": "index.html",
+  "description": "Full-stack rooftop solar analyzer application with React frontend and Express backend",
+  "main": "backend/src/server.js",
   "scripts": {
-    "dev": "node -r dotenv/config server.js",
-    "start": "node -r dotenv/config server.js",
-    "serve": "node -r dotenv/config server.js"
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "clean": "rm -rf node_modules frontend/node_modules backend/node_modules && npm run install-all",
+    "frontend": "cd frontend && npm start",
+    "backend": "cd backend && npm start"
   },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "keywords": [
+    "solar",
+    "rooftop",
+    "analyzer",
+    "react",
+    "express",
     "google-maps",
-    "measurement",
-    "rooftop"
+    "full-stack"
   ],
   "author": "",
   "license": "MIT",
-  "devDependencies": {
-    "http-server": "^14.1.1"
+  "repository": {
+    "type": "git",
+    "url": ""
   },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^4.21.2"
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
