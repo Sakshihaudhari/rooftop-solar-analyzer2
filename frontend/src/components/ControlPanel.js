@@ -3,6 +3,7 @@ import React from 'react';
 const ControlPanel = ({
   currentDrawingMode,
   selectedPanelSize,
+  rooftops,
   onDrawingModeChange,
   onPanelSizeChange,
   onOptimizePanels,
@@ -18,12 +19,14 @@ const ControlPanel = ({
           <button
             className={currentDrawingMode === 'rooftop' ? 'active' : ''}
             onClick={() => onDrawingModeChange('rooftop')}
+            disabled={currentDrawingMode === 'rooftop'}
           >
             Draw Rooftop
           </button>
           <button
             className={currentDrawingMode === 'obstacle' ? 'active' : ''}
             onClick={() => onDrawingModeChange('obstacle')}
+            disabled={currentDrawingMode === 'obstacle'}
           >
             Draw Obstacle
           </button>
@@ -35,10 +38,11 @@ const ControlPanel = ({
         <select
           value={selectedPanelSize}
           onChange={(e) => onPanelSizeChange(e.target.value)}
+          className="panel-size-select"
         >
-          <option value="small">Small (1.2m x 0.8m)</option>
-          <option value="standard">Standard (1.6m x 1.0m)</option>
-          <option value="large">Large (2.0m x 1.0m)</option>
+          <option value="small">Small (1.2m x 0.8m) - 300W</option>
+          <option value="standard">Standard (1.6m x 1.0m) - 400W</option>
+          <option value="large">Large (2.0m x 1.0m) - 500W</option>
         </select>
       </div>
 
@@ -46,8 +50,9 @@ const ControlPanel = ({
         <h3>Actions</h3>
         <button
           onClick={onOptimizePanels}
-          disabled={isLoading}
+          disabled={isLoading || rooftops.length === 0}
           className="optimize-button"
+          title={rooftops.length === 0 ? 'Draw a rooftop first' : ''}
         >
           {isLoading ? 'Optimizing...' : 'Optimize Panel Layout'}
         </button>

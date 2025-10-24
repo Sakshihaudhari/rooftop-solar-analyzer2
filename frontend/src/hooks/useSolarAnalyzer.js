@@ -79,7 +79,10 @@ const useSolarAnalyzer = () => {
       strokeColor: '#4285f4',
       strokeWeight: 2,
     });
-  }, [rooftops]);
+
+    // Reset drawing mode
+    setCurrentDrawingMode('none');
+  }, [rooftops, setCurrentDrawingMode]);
 
   // Add obstacle polygon
   const addObstacle = useCallback((polygon) => {
@@ -98,8 +101,10 @@ const useSolarAnalyzer = () => {
       strokeWeight: 2,
     });
 
+    // Reset drawing mode
+    setCurrentDrawingMode('none');
     setError(null);
-  }, [rooftops]);
+  }, [rooftops, setCurrentDrawingMode]);
 
   // Optimize panel layout
   const optimizePanels = useCallback(() => {
@@ -239,7 +244,7 @@ const useSolarAnalyzer = () => {
     }
 
     return false;
-  }, [isPointInPolygon, getPolygonBounds]);
+  }, [isPointInPolygon]);
 
   // Helper function to get polygon coordinates
   const getPolygonCoordinates = useCallback((polygon) => {
