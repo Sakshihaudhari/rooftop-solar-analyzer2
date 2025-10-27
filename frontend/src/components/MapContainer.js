@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleMap, LoadScript } from '@react-google-maps/api';
 
 // Create zoom control function
@@ -171,6 +171,102 @@ const MapContainer = ({
   const mapRef = useRef(null);
   const [map, setMap] = useState(null);
   const [drawingManager, setDrawingManager] = useState(null);
+  const [currentInfoWindow, setCurrentInfoWindow] = useState(null);
+  const [liveMeasurements, setLiveMeasurements] = useState(null);
+
+  // Function to clear measurements
+  const clearMeasurements = useCallback(() => {
+    setLiveMeasurements(null);
+    // Close any existing InfoWindow
+    if (currentInfoWindow) {
+      currentInfoWindow.close();
+      setCurrentInfoWindow(null);
+    }
+  }, [currentInfoWindow]);
+
+  // Google Earth-style measurement display function
+  const showPolygonMeasurements = useCallback((polygon) => {
+    if (!polygon || !map) return;
+
+    const path = polygon.getPath();
+
+    // Calculate area using Google's spherical geometry (same as Google Earth)
+    const area = window.google.maps.geometry.spherical.computeArea(path);
+
+    // Calculate perimeter using Google's spherical geometry (same as Google Earth)
+    let perimeter = 0;
+    for (let i = 0; i < path.getLength(); i++) {
+      const p1 = path.getAt(i);
+      const p2 = path.getAt((i + 1) % path.getLength());
+      perimeter += window.google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+    }
+
+    // Format area display (same logic as Google Earth)
+    const areaDisplay = area > 1000000
+      ? `${(area / 1000000).toFixed(2)} km²`
+      : `${area.toFixed(2)} m²`;
+
+    // Format perimeter display (same logic as Google Earth)
+    const perimeterDisplay = perimeter > 1000
+      ? `${(perimeter / 1000).toFixed(2)} km`
+      : `${perimeter.toFixed(2)} m`;
+
+    // Store measurements for fixed-position display
+    setLiveMeasurements({
+      area: areaDisplay,
+      perimeter: perimeterDisplay,
+      areaRaw: `${Math.round(area).toLocaleString()} m²`,
+      perimeterRaw: `${Math.round(perimeter).toLocaleString()} m`
+    });
+
+    // Close existing InfoWindow (if any)
+    if (currentInfoWindow) {
+      currentInfoWindow.close();
+      setCurrentInfoWindow(null);
+    }
+  }, [map, currentInfoWindow]);
+
+  // Show measurements for obstacles
+  const showObstacleMeasurements = useCallback((obstacle) => {
+    if (!obstacle || !map) return;
+
+    const path = obstacle.getPath();
+
+    // Calculate area using Google's spherical geometry
+    const area = window.google.maps.geometry.spherical.computeArea(path);
+
+    // Calculate perimeter using Google's spherical geometry
+    let perimeter = 0;
+    for (let i = 0; i < path.getLength(); i++) {
+      const p1 = path.getAt(i);
+      const p2 = path.getAt((i + 1) % path.getLength());
+      perimeter += window.google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+    }
+
+    // Format measurements like Google Earth
+    const areaDisplay = area > 1000000
+      ? `${(area / 1000000).toFixed(2)} km²`
+      : `${area.toFixed(2)} m²`;
+
+    const perimeterDisplay = perimeter > 1000
+      ? `${(perimeter / 1000).toFixed(2)} km`
+      : `${perimeter.toFixed(2)} m`;
+
+    // Store measurements for fixed-position display (obstacle style)
+    setLiveMeasurements({
+      area: areaDisplay,
+      perimeter: perimeterDisplay,
+      areaRaw: `${Math.round(area).toLocaleString()} m²`,
+      perimeterRaw: `${Math.round(perimeter).toLocaleString()} m`,
+      isObstacle: true
+    });
+
+    // Close existing InfoWindow (if any)
+    if (currentInfoWindow) {
+      currentInfoWindow.close();
+      setCurrentInfoWindow(null);
+    }
+  }, [map, currentInfoWindow]);
 
   // Initialize map
   const handleMapLoad = (mapInstance) => {
@@ -289,6 +385,20 @@ const MapContainer = ({
         if (event.type === 'polygon') {
           drawingManager.setDrawingMode(null);
 
+          // Clear any existing measurements before showing new ones
+          clearMeasurements();
+
+          // Show live measurements immediately
+          showPolygonMeasurements(event.overlay);
+
+          // Add edit listeners for real-time updates
+          const path = event.overlay.getPath();
+          const updateMeasurements = () => showPolygonMeasurements(event.overlay);
+
+          window.google.maps.event.addListener(path, 'set_at', updateMeasurements);
+          window.google.maps.event.addListener(path, 'insert_at', updateMeasurements);
+          window.google.maps.event.addListener(path, 'remove_at', updateMeasurements);
+
           if (onPolygonComplete) {
             onPolygonComplete(event.overlay, currentDrawingMode);
           }
@@ -305,7 +415,7 @@ const MapContainer = ({
         window.google.maps.event.removeListener(listener);
       };
     }
-  }, [drawingManager, map, currentDrawingMode, onPolygonComplete]);
+  }, [drawingManager, map, currentDrawingMode, onPolygonComplete, showPolygonMeasurements, showObstacleMeasurements, clearMeasurements]);
 
   // Update drawing options based on mode
   useEffect(() => {
@@ -322,6 +432,60 @@ const MapContainer = ({
       });
     }
   }, [currentDrawingMode, drawingManager]);
+
+  // Add click listeners to existing polygons for measurement display
+  useEffect(() => {
+    if (!map || rooftops.length === 0) return;
+
+    const clickListeners = rooftops.map(rooftop => {
+      const handlePolygonClick = () => {
+        clearMeasurements(); // Clear existing measurements first
+        showPolygonMeasurements(rooftop);
+      };
+      const listener = rooftop.addListener('click', handlePolygonClick);
+      return { polygon: rooftop, listener };
+    });
+
+    return () => {
+      clickListeners.forEach(({ listener }) => {
+        window.google.maps.event.removeListener(listener);
+      });
+    };
+  }, [map, rooftops, showPolygonMeasurements, clearMeasurements]);
+
+  // Add click listeners to existing obstacles for measurement display
+  useEffect(() => {
+    if (!map || obstacles.length === 0) return;
+
+    const clickListeners = obstacles.map(obstacle => {
+      const handleObstacleClick = () => {
+        clearMeasurements(); // Clear existing measurements first
+        showObstacleMeasurements(obstacle);
+      };
+      const listener = obstacle.addListener('click', handleObstacleClick);
+      return { obstacle, listener };
+    });
+
+    return () => {
+      clickListeners.forEach(({ listener }) => {
+        window.google.maps.event.removeListener(listener);
+      });
+    };
+  }, [map, obstacles, showObstacleMeasurements, clearMeasurements]);
+
+  // Clear measurements when drawing mode is cancelled or polygons are removed
+  useEffect(() => {
+    if (currentDrawingMode === 'none') {
+      clearMeasurements();
+    }
+  }, [currentDrawingMode, clearMeasurements]);
+
+  // Clear measurements when all polygons are cleared
+  useEffect(() => {
+    if (rooftops.length === 0 && obstacles.length === 0) {
+      clearMeasurements();
+    }
+  }, [rooftops.length, obstacles.length, clearMeasurements]);
 
   const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
@@ -378,6 +542,43 @@ const MapContainer = ({
           ))}
         </GoogleMap>
       </LoadScript>
+
+      {/* Fixed-position measurements display at bottom-left */}
+      {liveMeasurements && (
+        <div className="live-measurements-display" style={{
+          position: 'absolute',
+          bottom: '80px',
+          left: '20px',
+          padding: '12px 16px'
+        }}>
+          <div style={{ marginBottom: '8px' }}>
+            <strong style={{ color: liveMeasurements.isObstacle ? '#dc3545' : '#333', fontSize: '14px' }}>
+              {liveMeasurements.isObstacle ? 'Obstacle ' : ''}Area:
+            </strong>
+            <span style={{ color: '#666', marginLeft: '6px', fontSize: '14px' }}>
+              {liveMeasurements.area}
+            </span>
+          </div>
+          <div style={{ marginBottom: '4px' }}>
+            <strong style={{ color: '#333', fontSize: '14px' }}>Perimeter:</strong>
+            <span style={{ color: '#666', marginLeft: '6px', fontSize: '14px' }}>
+              {liveMeasurements.perimeter}
+            </span>
+          </div>
+          <div style={{
+            fontSize: '10px',
+            color: '#999',
+            fontFamily: 'monospace',
+            borderTop: '1px solid #f0f0f0',
+            paddingTop: '6px',
+            marginTop: '6px',
+            lineHeight: '1.3'
+          }}>
+            <div>Raw: {liveMeasurements.areaRaw}</div>
+            <div>Raw: {liveMeasurements.perimeterRaw}</div>
+          </div>
+        </div>
+      )}
 
       {/* Start drawing instruction overlay */}
       {currentDrawingMode !== 'none' && (
