@@ -2,6 +2,9 @@
 
 ## 🚀 Quick Deployment with Docker
 
+### Current Status
+✅ **Docker setup is configured and ready to use**
+
 ### Prerequisites
 - Docker and Docker Compose
 - Google Maps API key
@@ -9,17 +12,11 @@
 ### 1. Environment Setup
 Create a `.env` file in the root directory:
 ```bash
-# Copy the example
-cp .env.example .env
-```
-
-Edit the `.env` file:
-```bash
 # Google Maps API Key (required)
 REACT_APP_GOOGLE_MAPS_API_KEY=your_actual_api_key_here
 
-# Database URL (optional - defaults to SQLite)
-DATABASE_URL=postgresql://user:password@localhost:5432/rooftop_solar
+# Optional: Database URL (MongoDB/PostgreSQL)
+DATABASE_URL=mongodb://localhost:27017/rooftop_solar
 ```
 
 ### 2. Build and Run
@@ -32,8 +29,15 @@ docker-compose up -d --build
 ```
 
 ### 3. Access the Application
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
+- **Frontend:** http://localhost:3000 ✅
+- **Backend API:** http://localhost:8000 ✅
+- **Health Check:** http://localhost:8000/api/health
+
+### 4. Current Application Status
+- ✅ **Frontend:** Running on port 3000 (React app)
+- ✅ **Backend:** Running on port 8000 (Express API)
+- ✅ **Database:** MongoDB integration ready
+- ✅ **Google Maps:** API integration active
 
 ## 🖥️ Manual Deployment
 
@@ -124,7 +128,13 @@ GOOGLE_MAPS_API_KEY=your_api_key  # For server-side operations
 
 ## 🗄️ Database Setup
 
-### PostgreSQL (Recommended)
+### MongoDB (Default)
+```bash
+# MongoDB will connect automatically using the DATABASE_URL
+# No manual setup required for development
+```
+
+### PostgreSQL (Alternative)
 ```sql
 CREATE DATABASE rooftop_solar;
 CREATE USER solar_user WITH PASSWORD 'your_password';
@@ -134,7 +144,7 @@ GRANT ALL PRIVILEGES ON DATABASE rooftop_solar TO solar_user;
 ### Migration (if using database)
 ```bash
 cd backend
-npm run migrate
+npm run migrate  # If migrations are set up
 ```
 
 ## 🔒 Security Checklist
@@ -232,22 +242,18 @@ PORT=3001 npm start
 
 ## 🧪 Testing
 
-### Frontend Tests
-```bash
-cd frontend
-npm test
-```
-
-### Backend Tests
-```bash
-cd backend
-npm test
-```
+### Current Status
+- Testing libraries removed for production optimization
+- Manual testing through browser interface
+- API testing via health endpoints
 
 ### Integration Tests
 ```bash
 # Test API endpoints
 curl http://localhost:8000/api/health
+
+# Test frontend
+curl http://localhost:3000
 ```
 
 ## 📝 API Documentation
@@ -255,21 +261,93 @@ curl http://localhost:8000/api/health
 ### Health Check
 ```
 GET /api/health
+Response: { "status": "ok", "message": "Rooftop Solar Analyzer API is running" }
 ```
 
-### Solar Analysis
+### Environment Test
+```
+GET /api/test-env
+Response: Environment variables and API key status
+```
+
+### Designs Management
+
+#### Get All Designs
+```
+GET /api/designs
+Query params: ?userId=X&limit=20&skip=0&public=true
+Response: { "success": true, "count": N, "data": [...], "databaseStatus": "..." }
+```
+
+#### Get Single Design
+```
+GET /api/designs/:id
+Response: { "success": true, "data": {...} }
+```
+
+#### Create Design
 ```
 POST /api/designs
 Content-Type: application/json
 
 {
+  "name": "My Solar Design",
   "totalArea": 150.5,
   "usableArea": 135.2,
   "obstacleArea": 15.3,
   "perimeter": 52.1,
   "panelCount": 25,
   "totalCapacity": 10.0,
-  "estimatedGeneration": 15000
+  "estimatedGeneration": 15000,
+  "coordinates": [...],
+  "userId": "user123",
+  "isPublic": true
+}
+Response: { "success": true, "data": {...}, "message": "Design created successfully" }
+```
+
+#### Update Design
+```
+PUT /api/designs/:id
+Content-Type: application/json
+
+{
+  "name": "Updated Design",
+  "totalArea": 160.0,
+  ...
+}
+Response: { "success": true, "data": {...}, "message": "Design updated successfully" }
+```
+
+#### Delete Design
+```
+DELETE /api/designs/:id?userId=user123
+Response: { "success": true, "message": "Design deleted successfully" }
+```
+
+#### Find Nearby Designs
+```
+GET /api/designs/near/:lat/:lng?radius=10
+Response: { "success": true, "count": N, "data": [...], "center": {...}, "radius": 10 }
+```
+
+#### Recalculate Design
+```
+POST /api/designs/:id/calculate
+Response: { "success": true, "data": {...}, "message": "Design calculations updated" }
+```
+
+### Logging
+```
+POST /log
+Content-Type: application/json
+
+{
+  "message": "Error message",
+  "source": "script.js",
+  "lineno": 123,
+  "colno": 45,
+  "error": {...}
 }
 ```
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 const SearchBox = ({ map, onPlaceSelect }) => {
   const searchBoxRef = useRef(null);
