@@ -1,6 +1,153 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { GoogleMap, LoadScript } from '@react-google-maps/api';
 
+// Create zoom control function
+const createZoomControl = (map) => {
+  const zoomControlDiv = document.createElement('div');
+  zoomControlDiv.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    border-radius: 2px;
+    overflow: hidden;
+    font-size: 14px;
+  `;
+
+  const zoomInButton = document.createElement('button');
+  zoomInButton.innerHTML = '+';
+  zoomInButton.style.cssText = `
+    width: 32px;
+    height: 32px;
+    border: none;
+    background-color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    user-select: none;
+  `;
+  zoomInButton.title = 'Zoom in';
+  zoomInButton.onclick = () => map.setZoom(map.getZoom() + 1);
+
+  const zoomOutButton = document.createElement('button');
+  zoomOutButton.innerHTML = '−';
+  zoomOutButton.style.cssText = `
+    width: 32px;
+    height: 32px;
+    border: none;
+    background-color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    user-select: none;
+  `;
+  zoomOutButton.title = 'Zoom out';
+  zoomOutButton.onclick = () => map.setZoom(map.getZoom() - 1);
+
+  zoomControlDiv.appendChild(zoomInButton);
+  zoomControlDiv.appendChild(zoomOutButton);
+
+  return zoomControlDiv;
+};
+
+// Create scale control function
+const createScaleControl = (map) => {
+  const scaleControlDiv = document.createElement('div');
+
+  const updateScale = () => {
+    const zoom = map.getZoom();
+    const center = map.getCenter();
+    const lat = center.lat();
+
+    // Calculate meters per pixel based on zoom level and latitude
+    const metersPerPixel = (156543.03392 * Math.cos(lat * Math.PI / 180)) / Math.pow(2, zoom);
+
+    // Define scale distances based on zoom level (5m to 2000km range)
+    let targetDistance;
+    if (zoom >= 20) {
+      targetDistance = 5; // 5m
+    } else if (zoom >= 19) {
+      targetDistance = 10; // 10m
+    } else if (zoom >= 18) {
+      targetDistance = 20; // 20m
+    } else if (zoom >= 17) {
+      targetDistance = 50; // 50m
+    } else if (zoom >= 16) {
+      targetDistance = 100; // 100m
+    } else if (zoom >= 15) {
+      targetDistance = 200; // 200m
+    } else if (zoom >= 14) {
+      targetDistance = 500; // 500m
+    } else if (zoom >= 13) {
+      targetDistance = 1000; // 1km
+    } else if (zoom >= 12) {
+      targetDistance = 2000; // 2km
+    } else if (zoom >= 11) {
+      targetDistance = 5000; // 5km
+    } else if (zoom >= 10) {
+      targetDistance = 10000; // 10km
+    } else if (zoom >= 9) {
+      targetDistance = 20000; // 20km
+    } else if (zoom >= 8) {
+      targetDistance = 50000; // 50km
+    } else if (zoom >= 7) {
+      targetDistance = 100000; // 100km
+    } else if (zoom >= 6) {
+      targetDistance = 200000; // 200km
+    } else if (zoom >= 5) {
+      targetDistance = 500000; // 500km
+    } else if (zoom >= 4) {
+      targetDistance = 1000000; // 1000km
+    } else if (zoom >= 3) {
+      targetDistance = 2000000; // 2000km
+    } else {
+      targetDistance = 2000000; // 2000km max
+    }
+
+    // Calculate scale bar width (target around 80px)
+    const scaleWidth = Math.min(80, Math.max(20, (targetDistance / metersPerPixel) * 10));
+
+    // Format distance text
+    let distanceText;
+    if (targetDistance >= 1000000) {
+      distanceText = `${(targetDistance / 1000).toLocaleString()}km`;
+    } else if (targetDistance >= 1000) {
+      distanceText = `${(targetDistance / 1000).toLocaleString()}km`;
+    } else {
+      distanceText = `${targetDistance}m`;
+    }
+
+    // Update the scale bar content
+    scaleControlDiv.innerHTML = `
+      <div style="height: 2px; background-color: #000; width: ${scaleWidth}px; margin-right: 4px;"></div>
+      <span>${distanceText}</span>
+    `;
+  };
+
+  // Initial update
+  updateScale();
+
+  // Add listeners
+  const zoomListener = map.addListener('zoom_changed', updateScale);
+  const idleListener = map.addListener('idle', updateScale);
+
+  // Cleanup function
+  scaleControlDiv.cleanup = () => {
+    window.google.maps.event.removeListener(zoomListener);
+    window.google.maps.event.removeListener(idleListener);
+  };
+
+  return scaleControlDiv;
+};
+
 const containerStyle = {
   width: '100%',
   height: '100%',
@@ -58,6 +205,73 @@ const MapContainer = ({
       onMapInstanceReady(mapInstance);
     }
   };
+
+  // Add custom controls to map
+  useEffect(() => {
+    if (map) {
+      // Create zoom control container (matches Google Maps exactly)
+      const zoomContainer = document.createElement('div');
+      zoomContainer.style.cssText = `
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 6px rgba(0,0,0,.3);
+        overflow: hidden;
+        font-size: 14px;
+        margin-bottom: 8px;
+      `;
+
+      // Create scale control container (matches Google Maps exactly)
+      const scaleContainer = document.createElement('div');
+      scaleContainer.style.cssText = `
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 2px;
+        padding: 2px 4px;
+        font-size: 11px;
+        color: #333;
+        box-shadow: 0 1px 3px rgba(0,0,0,.3);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      `;
+
+      // Create main container for both controls (positioned like Google Maps)
+      const controlsContainer = document.createElement('div');
+      controlsContainer.style.cssText = `
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      `;
+
+      // Add zoom control
+      const zoomControl = createZoomControl(map);
+      zoomContainer.appendChild(zoomControl);
+      controlsContainer.appendChild(zoomContainer);
+
+      // Add scale control
+      const scaleControl = createScaleControl(map);
+      scaleContainer.appendChild(scaleControl);
+      controlsContainer.appendChild(scaleContainer);
+
+      // Add to map DOM directly (not using Google Maps control system)
+      map.getDiv().appendChild(controlsContainer);
+
+      return () => {
+        if (controlsContainer && controlsContainer.parentNode) {
+          // Clean up scale control listeners
+          if (scaleControl.cleanup) {
+            scaleControl.cleanup();
+          }
+          controlsContainer.parentNode.removeChild(controlsContainer);
+        }
+      };
+    }
+  }, [map]);
 
   // Handle drawing mode changes and start drawing
   useEffect(() => {
@@ -137,7 +351,8 @@ const MapContainer = ({
             mapTypeControl: true,
             streetViewControl: false,
             fullscreenControl: true,
-            zoomControl: true,
+            zoomControl: false,
+            scaleControl: false,
             gestureHandling: 'cooperative',
             mapTypeId: 'satellite',
           }}

@@ -93,6 +93,8 @@ Health Check: http://localhost:8000/api/health
 **Application Features:**
 - 🔍 **Location Search** with Google Places API
 - 🗺️ **Satellite Map** with drawing tools
+- 🔍 **Zoom Controls** with Google Maps-style +/- buttons (bottom right corner)
+- 📏 **Dynamic Scale Display** showing measurements from 5m to 2000km (bottom right corner)
 - 📏 **Real-time Measurements** and calculations
 - ⚡ **Solar Panel Optimization** with multiple panel sizes
 - 💾 **Design Persistence** via MongoDB backend
@@ -107,7 +109,7 @@ Health Check: http://localhost:8000/api/health
 5. **Optimize Layout**: Click "Optimize Panel Layout" for automatic panel placement
 6. **View Results**: Check real-time measurements and solar analysis in the sidebar
 
-**Current Experience:** Clean, focused interface with Google Maps-style markers and streamlined location search.
+**Current Experience:** Clean, focused interface with Google Maps-style markers, streamlined location search, and professional zoom controls with dynamic scale display positioned exactly like Google Maps (bottom right corner).
 
 ### Drawing Tips
 - Use satellite view for accurate rooftop outlines
