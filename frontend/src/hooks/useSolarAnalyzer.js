@@ -77,6 +77,7 @@ const useSolarAnalyzer = () => {
       fillColor: '#4285f4',
       strokeColor: '#4285f4',
       strokeWeight: 2,
+      zIndex: 1,
     });
 
     setCurrentDrawingMode('none');
@@ -96,6 +97,7 @@ const useSolarAnalyzer = () => {
       fillColor: '#db4437',
       strokeColor: '#db4437',
       strokeWeight: 2,
+      zIndex: 2,
     });
 
     setCurrentDrawingMode('none');
@@ -145,7 +147,7 @@ const useSolarAnalyzer = () => {
     return coordinates;
   }, []);
 
-  // Helper: create solar panel polygon with navy blue color
+  // Helper: create solar panel polygon with navy blue color and high z-index
   const createSolarPanel = useCallback((centerX, centerY, width, height, capacity) => {
     const halfWidth = width / 2;
     const halfHeight = height / 2;
@@ -163,7 +165,8 @@ const useSolarAnalyzer = () => {
       strokeOpacity: 1.0,
       strokeWeight: 1,
       fillColor: '#1A2E5F',
-      fillOpacity: 0.85
+      fillOpacity: 0.85,
+      zIndex: 10,
     });
 
     return panelPolygon;
