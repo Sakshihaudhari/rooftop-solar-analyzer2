@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleMap, LoadScript } from '@react-google-maps/api';
 
+// Static libraries array - prevents LoadScript from reloading on every render
+const GOOGLE_MAPS_LIBRARIES = ['geometry', 'places', 'drawing'];
+
 // Create zoom control function
 const createZoomControl = (map) => {
   const zoomControlDiv = document.createElement('div');
@@ -504,7 +507,7 @@ const MapContainer = ({
     <div style={{ height: '100%', width: '100%', position: 'relative' }}>
       <LoadScript
         googleMapsApiKey={apiKey}
-        libraries={['geometry', 'places', 'drawing']}
+        libraries={GOOGLE_MAPS_LIBRARIES}
         loadingElement={<div style={{ height: '100%' }} />}
       >
         <GoogleMap

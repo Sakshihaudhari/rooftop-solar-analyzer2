@@ -4,10 +4,13 @@ const ControlPanel = ({
   currentDrawingMode,
   selectedPanelSize,
   rooftops,
+  rooftopFillColor,
+  rooftopFillOpacity,
   onDrawingModeChange,
   onPanelSizeChange,
   onOptimizePanels,
   onClearAll,
+  onUpdateRooftopStyle,
   isLoading,
   error
 }) => {
@@ -32,6 +35,46 @@ const ControlPanel = ({
           </button>
         </div>
       </div>
+
+      {rooftops.length > 0 && (
+        <div className="control-section">
+          <h3>Rooftop Style</h3>
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500' }}>
+              Fill Color
+            </label>
+            <input
+              type="color"
+              value={rooftopFillColor || '#ffffff'}
+              onChange={(e) => onUpdateRooftopStyle && onUpdateRooftopStyle(e.target.value, rooftopFillOpacity)}
+              style={{
+                width: '100%',
+                height: '36px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500' }}>
+              Opacity: {Math.round((rooftopFillOpacity || 0.5) * 100)}%
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={rooftopFillOpacity || 0.5}
+              onChange={(e) => onUpdateRooftopStyle && onUpdateRooftopStyle(rooftopFillColor, parseFloat(e.target.value))}
+              style={{
+                width: '100%',
+                cursor: 'pointer',
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="control-section">
         <h3>Panel Size</h3>

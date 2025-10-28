@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import MapContainer from "./components/MapContainer";
-import ControlPanel from "./components/ControlPanel";
-import MeasurementsDisplay from "./components/MeasurementsDisplay";
-import SolarAnalysisDisplay from "./components/SolarAnalysisDisplay";
-import SearchBox from "./components/SearchBox";
-import useSolarAnalyzer from "./hooks/useSolarAnalyzer";
-import "./App.css";
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import useSolarAnalyzer from './hooks/useSolarAnalyzer';
+import MapContainer from './components/MapContainer';
+import ControlPanel from './components/ControlPanel';
+import MeasurementsDisplay from './components/MeasurementsDisplay';
+import SolarAnalysisDisplay from './components/SolarAnalysisDisplay';
+import SearchBox from './components/SearchBox';
+import './App.css';
 
 function App() {
   const {
@@ -18,6 +18,9 @@ function App() {
     selectedPanelSize,
     isLoading,
     error,
+    rooftopFillColor,
+    rooftopFillOpacity,
+    updateRooftopStyle,
     setCurrentDrawingMode,
     setSelectedPanelSize,
     addRooftop,
@@ -108,33 +111,21 @@ function App() {
       return;
     }
 
-    // Clear existing location marker
-    if (locationMarker) {
-      locationMarker.setMap(null);
-    }
+    const location = place.geometry.location;
+    const mapCenter = {
+      lat: location.lat(),
+      lng: location.lng()
+    };
 
-    // Create new location marker (EXACT Google Maps design)
+    // Center map on selected place
+    mapInstance.setCenter(mapCenter);
+    mapInstance.setZoom(18);
+
+    // Create a marker at the location
     const marker = new window.google.maps.Marker({
-      position: place.geometry.location,
+      position: mapCenter,
       map: mapInstance,
-      title: place.name || place.formatted_address,
-      icon: {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-            <!-- Drop shadow -->
-            <ellipse cx="20" cy="38" rx="4" ry="1.5" fill="#000000" opacity="0.2"/>
-            <!-- Main marker body with black outline -->
-            <path fill="#ea4335" stroke="#000000" stroke-width="1" d="M20 3c-5.5 0-10 4.5-10 10 0 8 10 24 10 24s10-16 10-24c0-5.5-4.5-10-10-10z"/>
-            <!-- White center circle with black border -->
-            <circle fill="#ffffff" stroke="#000000" stroke-width="1" cx="20" cy="13" r="5.5"/>
-            <!-- Inner red circle -->
-            <circle fill="#ea4335" cx="20" cy="13" r="2"/>
-          </svg>
-        `),
-        scaledSize: new window.google.maps.Size(40, 40),
-        anchor: new window.google.maps.Point(20, 40)
-      },
-      animation: window.google.maps.Animation.DROP
+      title: place.name || 'Selected Location'
     });
 
     // Store the marker reference
@@ -199,10 +190,13 @@ function App() {
               currentDrawingMode={currentDrawingMode}
               selectedPanelSize={selectedPanelSize}
               rooftops={rooftops}
+              rooftopFillColor={rooftopFillColor}
+              rooftopFillOpacity={rooftopFillOpacity}
               onDrawingModeChange={handleDrawingModeChange}
               onPanelSizeChange={setSelectedPanelSize}
               onOptimizePanels={handleOptimizePanels}
               onClearAll={handleClearAll}
+              onUpdateRooftopStyle={updateRooftopStyle}
               isLoading={isLoading}
               error={error}
             />
