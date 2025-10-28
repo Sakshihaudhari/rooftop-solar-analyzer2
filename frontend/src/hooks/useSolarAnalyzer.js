@@ -63,27 +63,24 @@ const useSolarAnalyzer = () => {
   useEffect(() => {
     calculateMeasurements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rooftops, obstacles]); // calculateMeasurements is stable within this component
+  }, [rooftops, obstacles]);
 
   // Add rooftop polygon
   const addRooftop = useCallback((polygon) => {
-    // Remove existing rooftops
     rooftops.forEach(rooftop => {
       rooftop.setMap(null);
     });
 
     setRooftops([polygon]);
 
-    // Update styling
     polygon.setOptions({
       fillColor: '#4285f4',
       strokeColor: '#4285f4',
       strokeWeight: 2,
     });
 
-    // Reset drawing mode
     setCurrentDrawingMode('none');
-  }, [rooftops, setCurrentDrawingMode]); // Need rooftops for iteration and setCurrentDrawingMode for state update
+  }, [rooftops, setCurrentDrawingMode]);
 
   // Add obstacle polygon
   const addObstacle = useCallback((polygon) => {
@@ -95,19 +92,17 @@ const useSolarAnalyzer = () => {
 
     setObstacles(prev => [...prev, polygon]);
 
-    // Update styling
     polygon.setOptions({
       fillColor: '#db4437',
       strokeColor: '#db4437',
       strokeWeight: 2,
     });
 
-    // Reset drawing mode
     setCurrentDrawingMode('none');
     setError(null);
-  }, [rooftops.length, setCurrentDrawingMode, setError]); // Need these setters
+  }, [rooftops.length, setCurrentDrawingMode, setError]);
 
-  // Helper function to get polygon bounds
+  // Helper: polygon bounds (lat/lng degrees)
   const getPolygonBounds = useCallback((coordinates) => {
     let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
 
@@ -125,7 +120,7 @@ const useSolarAnalyzer = () => {
     };
   }, []);
 
-  // Helper function to check if point is in polygon
+  // Helper: point in polygon (ray casting)
   const isPointInPolygon = useCallback((point, polygon) => {
     let inside = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -137,7 +132,7 @@ const useSolarAnalyzer = () => {
     return inside;
   }, []);
 
-  // Helper function to get polygon coordinates
+  // Helper: extract polygon coordinates from google polygon
   const getPolygonCoordinates = useCallback((polygon) => {
     const path = polygon.getPath();
     const coordinates = [];
@@ -150,7 +145,7 @@ const useSolarAnalyzer = () => {
     return coordinates;
   }, []);
 
-  // Helper function to create solar panel
+  // Helper: create solar panel polygon with navy blue color
   const createSolarPanel = useCallback((centerX, centerY, width, height, capacity) => {
     const halfWidth = width / 2;
     const halfHeight = height / 2;
@@ -164,17 +159,17 @@ const useSolarAnalyzer = () => {
 
     const panelPolygon = new window.google.maps.Polygon({
       paths: panelCoords,
-      strokeColor: '#34a853',
-      strokeOpacity: 0.8,
+      strokeColor: '#0D1B3F',
+      strokeOpacity: 1.0,
       strokeWeight: 1,
-      fillColor: '#34a853',
-      fillOpacity: 0.6
+      fillColor: '#1A2E5F',
+      fillOpacity: 0.85
     });
 
     return panelPolygon;
   }, []);
 
-  // Helper function to check if panel intersects obstacle
+  // Helper: check if panel intersects obstacle
   const doesPanelIntersectObstacle = useCallback((panelCenterX, panelCenterY, panelWidth, panelHeight, obstaclePolygon) => {
     const halfWidth = panelWidth / 2;
     const halfHeight = panelHeight / 2;
@@ -186,7 +181,6 @@ const useSolarAnalyzer = () => {
       { lat: panelCenterY + halfHeight, lng: panelCenterX - halfWidth }
     ];
 
-    // Check if any panel corner is inside the obstacle
     for (const corner of panelCorners) {
       if (isPointInPolygon(corner, getPolygonCoordinates(obstaclePolygon))) {
         return true;
@@ -196,37 +190,45 @@ const useSolarAnalyzer = () => {
     return false;
   }, [isPointInPolygon, getPolygonCoordinates]);
 
-  // Place panels in polygon using grid algorithm
+  // Place panels in polygon using grid algorithm with proper unit conversion
   const placePanelsInPolygon = useCallback((rooftopCoords, panelSize) => {
     const bounds = getPolygonBounds(rooftopCoords);
-    const panelWidth = panelSize.width;
-    const panelHeight = panelSize.height;
+    
+    // Convert panel size from meters to lat/lng degrees
+    // 1 degree latitude = ~111,111 meters (constant)
+    // 1 degree longitude = ~111,111 * cos(latitude) meters (varies by latitude)
+    const avgLat = (bounds.minLat + bounds.maxLat) / 2;
+    const metersPerDegreeLat = 111111;
+    const metersPerDegreeLng = 111111 * Math.cos(avgLat * Math.PI / 180);
+    
+    const panelWidthDeg = panelSize.width / metersPerDegreeLng;
+    const panelHeightDeg = panelSize.height / metersPerDegreeLat;
 
     // Calculate number of panels that can fit
-    const widthCount = Math.floor(bounds.width / panelWidth);
-    const heightCount = Math.floor(bounds.height / panelHeight);
+    const widthCount = Math.max(1, Math.floor(bounds.width / panelWidthDeg));
+    const heightCount = Math.max(1, Math.floor(bounds.height / panelHeightDeg));
 
     const newPanels = [];
 
     // Place panels in a grid pattern
     for (let row = 0; row < heightCount; row++) {
       for (let col = 0; col < widthCount; col++) {
-        const centerX = bounds.minLng + (col * panelWidth) + (panelWidth / 2);
-        const centerY = bounds.minLat + (row * panelHeight) + (panelHeight / 2);
+        const centerX = bounds.minLng + (col * panelWidthDeg) + (panelWidthDeg / 2);
+        const centerY = bounds.minLat + (row * panelHeightDeg) + (panelHeightDeg / 2);
 
-        // Check if this panel position is within the rooftop polygon
+        // Check if panel position is within the rooftop polygon
         if (isPointInPolygon({ lat: centerY, lng: centerX }, rooftopCoords)) {
           // Check for obstacle intersections
           let intersectsObstacle = false;
           for (const obstacle of obstacles) {
-            if (doesPanelIntersectObstacle(centerX, centerY, panelWidth, panelHeight, obstacle)) {
+            if (doesPanelIntersectObstacle(centerX, centerY, panelWidthDeg, panelHeightDeg, obstacle)) {
               intersectsObstacle = true;
               break;
             }
           }
 
           if (!intersectsObstacle) {
-            const panel = createSolarPanel(centerX, centerY, panelWidth, panelHeight, panelSize.capacity);
+            const panel = createSolarPanel(centerX, centerY, panelWidthDeg, panelHeightDeg, panelSize.capacity);
             newPanels.push(panel);
           }
         }
@@ -240,7 +242,7 @@ const useSolarAnalyzer = () => {
   const updateSolarAnalysis = useCallback((panels, panelSize) => {
     const panelCount = panels.length;
     const totalCapacity = panelCount * panelSize.capacity;
-    const estimatedGeneration = totalCapacity * 1500; // kWh/year (average 4 hours of sun per day)
+    const estimatedGeneration = totalCapacity * 1500;
 
     const efficiency = rooftops.length > 0 ?
       (measurements.totalArea > 0 ?
@@ -252,7 +254,7 @@ const useSolarAnalyzer = () => {
       estimatedGeneration,
       efficiency,
     });
-  }, [setSolarAnalysis, measurements.totalArea, rooftops.length]); // Need these for the calculation
+  }, [setSolarAnalysis, measurements.totalArea, rooftops.length]);
 
   // Optimize panel layout
   const optimizePanels = useCallback(() => {
@@ -265,7 +267,6 @@ const useSolarAnalyzer = () => {
     setError(null);
 
     try {
-      // Clear existing panels
       solarPanels.forEach(panel => {
         panel.setMap(null);
       });
@@ -278,7 +279,6 @@ const useSolarAnalyzer = () => {
         return;
       }
 
-      // Get rooftop coordinates for panel placement
       const rooftopPath = rooftops[0].getPath();
       const rooftopCoords = [];
 
@@ -287,12 +287,10 @@ const useSolarAnalyzer = () => {
         rooftopCoords.push({ lat: point.lat(), lng: point.lng() });
       }
 
-      // Place panels using the grid algorithm
       const newPanels = placePanelsInPolygon(rooftopCoords, panelSize);
 
       setSolarPanels(newPanels);
 
-      // Update solar analysis
       updateSolarAnalysis(newPanels, panelSize);
 
       setIsLoading(false);
@@ -300,11 +298,10 @@ const useSolarAnalyzer = () => {
       setError('Error optimizing panel layout: ' + err.message);
       setIsLoading(false);
     }
-  }, [rooftops, measurements.usableArea, selectedPanelSize, placePanelsInPolygon, updateSolarAnalysis, setError, setIsLoading, setSolarPanels, solarPanels]); // Need solarPanels for clearing
+  }, [rooftops, measurements.usableArea, selectedPanelSize, placePanelsInPolygon, updateSolarAnalysis, setError, setIsLoading, setSolarPanels, solarPanels]);
 
   // Clear all polygons and panels
   const clearAll = useCallback(() => {
-    // Clear existing polygons from map
     rooftops.forEach(rooftop => {
       rooftop.setMap(null);
     });
@@ -317,7 +314,6 @@ const useSolarAnalyzer = () => {
       panel.setMap(null);
     });
 
-    // Reset state
     setRooftops([]);
     setObstacles([]);
     setSolarPanels([]);
@@ -329,10 +325,9 @@ const useSolarAnalyzer = () => {
     });
     setSolarAnalysis(null);
     setError(null);
-  }, [rooftops, obstacles, solarPanels, setRooftops, setObstacles, setSolarPanels, setMeasurements, setSolarAnalysis, setError]); // Need these for the operations
+  }, [rooftops, obstacles, solarPanels, setRooftops, setObstacles, setSolarPanels, setMeasurements, setSolarAnalysis, setError]);
 
   return {
-    // State
     rooftops,
     obstacles,
     solarPanels,
@@ -343,7 +338,6 @@ const useSolarAnalyzer = () => {
     isLoading,
     error,
 
-    // Actions
     setCurrentDrawingMode,
     setSelectedPanelSize,
     addRooftop,
@@ -353,33 +347,25 @@ const useSolarAnalyzer = () => {
   };
 };
 
-// Google Earth-style measurement functions (same logic as Google Earth)
+// Google Earth-style measurement functions
 const calculatePolygonArea = (polygon) => {
   if (!polygon || !polygon.getPath) return 0;
-
   const path = polygon.getPath();
-
-  // Use Google's spherical geometry - exactly like Google Earth
   return window.google.maps.geometry.spherical.computeArea(path);
 };
 
 const calculatePolygonPerimeter = (polygon) => {
   if (!polygon || !polygon.getPath) return 0;
-
   const path = polygon.getPath();
-
-  // Use Google's spherical geometry for distance calculation - exactly like Google Earth
   let perimeter = 0;
   for (let i = 0; i < path.getLength(); i++) {
     const p1 = path.getAt(i);
     const p2 = path.getAt((i + 1) % path.getLength());
     perimeter += window.google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
   }
-
   return perimeter;
 };
 
-// Format measurements like Google Earth (used in MeasurementsDisplay component)
 export const formatArea = (area) => {
   return area > 1000000
     ? `${(area / 1000000).toFixed(2)} km²`
