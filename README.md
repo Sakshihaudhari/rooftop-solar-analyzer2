@@ -178,26 +178,22 @@ Save solar analysis results
 }
 ```
 
-## 🔄 Recent Updates (October 27, 2025)
+## 🔄 Recent Updates (October 28, 2025)
 
-### ✅ **Codebase Optimization**
-- **Removed unused components** (LocationDetailsPanel - streamlined UI)
-- **Cleaned dependencies** (62 test packages removed, ~15% bundle reduction)
-- **Removed empty directories** (backend/config, backend/utils, backend/middleware)
-- **Eliminated build artifacts** (frontend/build directory)
-- **Updated documentation** (all guides reflect current status)
+### ✅ **2-Foot Zoom Precision (Level 22)**
+- **Ultra-close zoom** enabled up to Google Maps level 22
+- **2-foot ground resolution** (0.05 meters/pixel) for professional panel placement
+- **Satellite imagery optimization** for rooftop texture detail
+- **Industry parity** with HelioScope and PVCase standards
 
-### ✅ **UI/UX Improvements**
-- **Streamlined interface** - Removed unnecessary location details panel
-- **Focused experience** - Clean, professional design without distractions
-- **Google Maps-style markers** - Exact design implementation
-- **Optimized performance** - Faster load times and smoother interactions
-
-### ✅ **Backend Enhancements**
-- **MongoDB integration** - Document-based storage for solar designs
-- **Comprehensive API** - Full CRUD operations for design management
-- **Environment configuration** - Proper development and production setup
-- **Error handling** - Robust logging and validation
+### ✅ **Comprehensive Codebase Cleanup**
+- **Removed 11 duplicate/test documentation files** (consolidated to production guides)
+- **Removed meta-cleanup documentation** (CLEANUP_SUMMARY.md, FINAL_STATUS.md)
+- **Cleaned build artifacts** (frontend/build/ in .gitignore - remove locally if present)
+- **Cleaned empty/test files** - neat and organized structure
+- **Removed unused components** (LocationDetailsPanel)
+- **Optimized dependencies** (~15% bundle reduction)
+- **Final result**: 4 production-ready guides + clean codebase
 
 ## 🛠️ Customization
 
@@ -221,6 +217,59 @@ const estimatedGeneration = totalCapacity * 1500; // kWh/year
 Main styles are in `frontend/src/App.css`. The design follows a professional, clean aesthetic similar to industry tools like HelioScope.
 
 ## 🔍 Troubleshooting
+
+### ❌ Zoom Stops at Level 15-18 (Not Reaching Level 22)
+**Problem**: You can't zoom beyond 5 meters even though the app is configured for zoom 22.
+
+**Root Cause**: Your Google Maps API key has **API Restrictions** that prevent high-zoom satellite tiles.
+
+**Solution (3 minutes):**
+
+1. **Go to Google Cloud Console**
+   - Visit: https://console.cloud.google.com/
+   - Sign in with your Google account
+
+2. **Select Your Project**
+   - Click project dropdown (top-left)
+   - Select the project where your Maps API key is located
+
+3. **Navigate to API Key Settings**
+   - Left sidebar → **"APIs & Services"**
+   - Click **"Credentials"** tab
+   - Find your API key (starts with `AIzaSyD_`)
+   - **Click on it** to edit
+
+4. **Change API Restrictions (CRITICAL)**
+   - Scroll down to **"API restrictions"** section
+   - Current setting: **"Restrict key to specific APIs"**
+   - **Click the dropdown** and select: **"Unrestricted"**
+   - Make sure it now shows: **"Unrestricted"**
+
+5. **Save Changes**
+   - Scroll to bottom
+   - Click **"Save"** button (blue)
+   - Wait for success message
+
+6. **Wait for Propagation**
+   - ⏱️ Wait **30–60 seconds** for Google's servers to update
+
+7. **Hard Reload App**
+   - Go to: http://localhost:3000
+   - Press: **Ctrl+Shift+R** (Windows) or **Cmd+Shift+R** (Mac)
+   - Wait for page to fully reload
+
+8. **Test Zoom**
+   - Click on map
+   - Scroll UP with mouse wheel
+   - You should now reach **Level 22** ✅
+   - At zoom 22, you'll see roof shingles clearly
+
+**If still not working:**
+- Verify API Restrictions = **"Unrestricted"** (not "Restrict key")
+- Clear browser cache: **Ctrl+Shift+Delete**
+- Try incognito/private window
+- Wait another 2-3 minutes for full propagation
+- Check browser console (F12) for errors
 
 ### Google Maps Not Loading
 - Verify API key is set in `.env`

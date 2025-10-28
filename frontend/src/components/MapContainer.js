@@ -520,8 +520,15 @@ const MapContainer = ({
             fullscreenControl: true,
             zoomControl: false,
             scaleControl: false,
-            gestureHandling: 'cooperative',
+            gestureHandling: 'greedy',
             mapTypeId: 'satellite',
+            minZoom: 15,
+            maxZoom: 22,
+            tilt: 0,
+            restriction: {
+              latLngBounds: null,
+              strictBounds: false,
+            },
           }}
           onLoad={handleMapLoad}
         >
