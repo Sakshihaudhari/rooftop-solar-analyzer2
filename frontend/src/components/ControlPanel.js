@@ -15,102 +15,103 @@ const ControlPanel = ({
   error
 }) => {
   return (
-    <div className="control-panel">
-      <div className="control-section">
-        <h3>Drawing Mode</h3>
+    <div className="unified-sidebar">
+      {/* Section 1: Drawing & Controls */}
+      <section className="sidebar-section">
+        <h2 className="section-title">Drawing Mode</h2>
+        
         <div className="mode-buttons">
           <button
-            className={currentDrawingMode === 'rooftop' ? 'active' : ''}
+            className={`mode-btn ${currentDrawingMode === 'rooftop' ? 'active' : ''}`}
             onClick={() => onDrawingModeChange('rooftop')}
             disabled={currentDrawingMode === 'rooftop'}
           >
             Draw Rooftop
           </button>
           <button
-            className={currentDrawingMode === 'obstacle' ? 'active' : ''}
+            className={`mode-btn ${currentDrawingMode === 'obstacle' ? 'active' : ''}`}
             onClick={() => onDrawingModeChange('obstacle')}
             disabled={currentDrawingMode === 'obstacle'}
           >
             Draw Obstacle
           </button>
         </div>
-      </div>
 
-      {rooftops.length > 0 && (
-        <div className="control-section">
-          <h3>Rooftop Style</h3>
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500' }}>
-              Fill Color
-            </label>
-            <input
-              type="color"
-              value={rooftopFillColor || '#ffffff'}
-              onChange={(e) => onUpdateRooftopStyle && onUpdateRooftopStyle(e.target.value, rooftopFillOpacity)}
-              style={{
-                width: '100%',
-                height: '36px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            />
+        {/* Rooftop Style - Conditional */}
+        {rooftops.length > 0 && (
+          <div className="rooftop-style-controls">
+            <label className="control-label">Rooftop Fill</label>
+            
+            <div className="color-opacity-group">
+              <input
+                type="color"
+                className="color-input"
+                value={rooftopFillColor || '#ffffff'}
+                onChange={(e) => onUpdateRooftopStyle && onUpdateRooftopStyle(e.target.value, rooftopFillOpacity)}
+              />
+              
+              <div className="opacity-container">
+                <input
+                  type="range"
+                  className="opacity-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={rooftopFillOpacity || 0.5}
+                  onChange={(e) => onUpdateRooftopStyle && onUpdateRooftopStyle(rooftopFillColor, parseFloat(e.target.value))}
+                />
+                <span className="opacity-label">
+                  {Math.round((rooftopFillOpacity || 0.5) * 100)}%
+                </span>
+              </div>
+            </div>
           </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500' }}>
-              Opacity: {Math.round((rooftopFillOpacity || 0.5) * 100)}%
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={rooftopFillOpacity || 0.5}
-              onChange={(e) => onUpdateRooftopStyle && onUpdateRooftopStyle(rooftopFillColor, parseFloat(e.target.value))}
-              style={{
-                width: '100%',
-                cursor: 'pointer',
-              }}
-            />
-          </div>
+        )}
+
+        {/* Panel Size Selector */}
+        <div className="panel-size-group">
+          <label className="control-label">Panel Size</label>
+          <select
+            value={selectedPanelSize}
+            onChange={(e) => onPanelSizeChange(e.target.value)}
+            className="panel-size-select"
+          >
+            <option value="small">Small (1.2m × 0.8m) – 300W</option>
+            <option value="standard">Standard (1.6m × 1.0m) – 400W</option>
+            <option value="large">Large (2.0m × 1.0m) – 500W</option>
+          </select>
         </div>
-      )}
+      </section>
 
-      <div className="control-section">
-        <h3>Panel Size</h3>
-        <select
-          value={selectedPanelSize}
-          onChange={(e) => onPanelSizeChange(e.target.value)}
-          className="panel-size-select"
-        >
-          <option value="small">Small (1.2m x 0.8m) - 300W</option>
-          <option value="standard">Standard (1.6m x 1.0m) - 400W</option>
-          <option value="large">Large (2.0m x 1.0m) - 500W</option>
-        </select>
-      </div>
+      {/* Section 2: Actions */}
+      <section className="sidebar-section actions-section">
+        <div className="action-buttons">
+          <button
+            onClick={onOptimizePanels}
+            disabled={isLoading || rooftops.length === 0}
+            className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
+            title={rooftops.length === 0 ? 'Draw a rooftop first' : 'Optimize panel layout'}
+          >
+            {isLoading ? '⏳ Optimizing...' : '✓ Optimize Layout'}
+          </button>
+          <button
+            onClick={onClearAll}
+            className="btn btn-secondary"
+            title="Clear all drawings and analysis"
+          >
+            ✕ Clear All
+          </button>
+        </div>
+      </section>
 
-      <div className="control-section">
-        <h3>Actions</h3>
-        <button
-          onClick={onOptimizePanels}
-          disabled={isLoading || rooftops.length === 0}
-          className="optimize-button"
-          title={rooftops.length === 0 ? 'Draw a rooftop first' : ''}
-        >
-          {isLoading ? 'Optimizing...' : 'Optimize Panel Layout'}
-        </button>
-        <button
-          onClick={onClearAll}
-          className="clear-button"
-        >
-          Clear All
-        </button>
-      </div>
-
+      {/* Error Messages */}
       {error && (
-        <div className="error-message">
-          <p>Error: {error}</p>
-        </div>
+        <section className="sidebar-section error-section">
+          <div className="error-banner">
+            <span className="error-icon">⚠️</span>
+            <p className="error-text">{error}</p>
+          </div>
+        </section>
       )}
     </div>
   );

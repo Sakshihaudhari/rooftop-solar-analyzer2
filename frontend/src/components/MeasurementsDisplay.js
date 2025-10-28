@@ -1,11 +1,10 @@
 import React from 'react';
-import { formatArea, formatPerimeter } from '../hooks/useSolarAnalyzer';
 
 const MeasurementsDisplay = ({ measurements }) => {
   if (!measurements || measurements.totalArea === 0) {
     return (
       <div className="measurements-display">
-        <h4>📐 Measurements</h4>
+        <h4 className="data-section-title">📐 Measurements</h4>
         <div className="measurements-placeholder">
           <p>Draw a rooftop to see measurements</p>
         </div>
@@ -15,56 +14,54 @@ const MeasurementsDisplay = ({ measurements }) => {
 
   return (
     <div className="measurements-display">
-      <h4>📐 Measurements</h4>
+      <h4 className="data-section-title">📐 Measurements</h4>
       <div className="measurements-grid">
-        <div className="measurement-item">
-          <div className="measurement-label">Total Area</div>
-          <div className="measurement-value">
-            {formatArea(measurements.totalArea)}
+        {/* Total Area Card */}
+        <div className="measurement-card">
+          <div className="card-label">Total Area</div>
+          <div className="card-value color-blue">
+            {Math.round(measurements.totalArea).toLocaleString()}
           </div>
-          <div className="measurement-raw">
-            {Math.round(measurements.totalArea).toLocaleString()} m²
-          </div>
+          <div className="card-unit">m²</div>
         </div>
 
-        <div className="measurement-item">
-          <div className="measurement-label">Usable Area</div>
-          <div className="measurement-value" style={{ color: '#28a745' }}>
-            {formatArea(measurements.usableArea)}
+        {/* Usable Area Card */}
+        <div className="measurement-card">
+          <div className="card-label">Usable Area</div>
+          <div className="card-value color-green">
+            {Math.round(measurements.usableArea).toLocaleString()}
           </div>
-          <div className="measurement-raw">
-            {Math.round(measurements.usableArea).toLocaleString()} m²
-          </div>
+          <div className="card-unit">m²</div>
         </div>
 
-        <div className="measurement-item">
-          <div className="measurement-label">Obstacle Area</div>
-          <div className="measurement-value" style={{ color: '#dc3545' }}>
-            {formatArea(measurements.obstacleArea)}
+        {/* Obstacle Area Card */}
+        <div className="measurement-card">
+          <div className="card-label">Obstacle Area</div>
+          <div className="card-value color-red">
+            {Math.round(measurements.obstacleArea).toLocaleString()}
           </div>
-          <div className="measurement-raw">
-            {Math.round(measurements.obstacleArea).toLocaleString()} m²
-          </div>
+          <div className="card-unit">m²</div>
         </div>
 
-        <div className="measurement-item">
-          <div className="measurement-label">Perimeter</div>
-          <div className="measurement-value">
-            {formatPerimeter(measurements.perimeter)}
+        {/* Perimeter Card */}
+        <div className="measurement-card">
+          <div className="card-label">Perimeter</div>
+          <div className="card-value color-blue">
+            {Math.round(measurements.perimeter).toLocaleString()}
           </div>
-          <div className="measurement-raw">
-            {Math.round(measurements.perimeter).toLocaleString()} m
-          </div>
+          <div className="card-unit">m</div>
         </div>
 
-        <div className="measurement-item">
-          <div className="measurement-label">Usable %</div>
-          <div className="measurement-value" style={{ color: '#17a2b8' }}>
+        {/* Usable Percentage Card */}
+        <div className="measurement-card full-width">
+          <div className="card-label">Usable Percentage</div>
+          <div className="card-value color-teal">
             {measurements.totalArea > 0
-              ? `${((measurements.usableArea / measurements.totalArea) * 100).toFixed(1)}%`
-              : '0%'
+              ? `${((measurements.usableArea / measurements.totalArea) * 100).toFixed(1)}`
+              : '0'
             }
           </div>
+          <div className="card-unit">%</div>
         </div>
       </div>
     </div>

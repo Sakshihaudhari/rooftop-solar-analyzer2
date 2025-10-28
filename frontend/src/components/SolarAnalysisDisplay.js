@@ -7,31 +7,42 @@ const SolarAnalysisDisplay = ({ solarAnalysis }) => {
 
   return (
     <div className="solar-analysis-display">
-      <h4>Solar Panel Analysis</h4>
+      <h4 className="data-section-title">☀️ Solar Analysis</h4>
       <div className="solar-grid">
-        <div className="solar-item">
-          <div className="solar-label">Panel Count</div>
-          <div className="solar-value">
-            {solarAnalysis.panelCount}
+        {/* Panel Count Card */}
+        <div className="analysis-card">
+          <div className="card-label">Panel Count</div>
+          <div className="card-value color-green">
+            {solarAnalysis.panelCount.toLocaleString()}
           </div>
+          <div className="card-unit">units</div>
         </div>
-        <div className="solar-item">
-          <div className="solar-label">Total Capacity</div>
-          <div className="solar-value">
-            {solarAnalysis.totalCapacity.toFixed(1)} kW
+
+        {/* Total Capacity Card */}
+        <div className="analysis-card">
+          <div className="card-label">Total Capacity</div>
+          <div className="card-value color-green">
+            {solarAnalysis.totalCapacity.toFixed(1)}
           </div>
+          <div className="card-unit">kW</div>
         </div>
-        <div className="solar-item">
-          <div className="solar-label">Annual Generation</div>
-          <div className="solar-value">
-            {Math.round(solarAnalysis.estimatedGeneration).toLocaleString()} kWh/year
+
+        {/* Annual Generation Card */}
+        <div className="analysis-card full-width">
+          <div className="card-label">Annual Generation</div>
+          <div className="card-value color-green">
+            {Math.round(solarAnalysis.estimatedGeneration).toLocaleString()}
           </div>
+          <div className="card-unit">kWh/year</div>
         </div>
-        <div className="solar-item">
-          <div className="solar-label">Efficiency</div>
-          <div className="solar-value">
-            {solarAnalysis.efficiency.toFixed(1)}%
+
+        {/* Efficiency Card */}
+        <div className="analysis-card full-width">
+          <div className="card-label">Efficiency</div>
+          <div className="card-value color-green">
+            {solarAnalysis.efficiency.toFixed(1)}
           </div>
+          <div className="card-unit">%</div>
         </div>
       </div>
     </div>
